@@ -1,0 +1,57 @@
+service: evm-token-api
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  region: us-east-1
+  stage: dev
+  environment:
+    NODE_ENV: ${self:provider.stage}
+    DB_HOST: ${ssm:/evm-token-api/${self:provider.stage}/DB_HOST}
+    DB_PORT: ${ssm:/evm-token-api/${self:provider.stage}/DB_PORT}
+    DB_USERNAME: ${ssm:/evm-token-api/${self:provider.stage}/DB_USERNAME}
+    DB_PASSWORD: ${ssm:/evm-token-api/${self:provider.stage}/DB_PASSWORD}
+    DB_NAME: ${ssm:/evm-token-api/${self:provider.stage}/DB_NAME}
+    STRIPE_SECRET_KEY: ${ssm:/evm-token-api/${self:provider.stage}/STRIPE_SECRET_KEY}
+  vpc:
+    securityGroupIds:
+      - ${ssm:/evm-token-api/${self:provider.stage}/SECURITY_GROUP_ID}
+    subnetIds:
+      - ${ssm:/evm-token-api/${self:provider.stage}/SUBNET_ID1}
+      - ${ssm:/evm-token-api/${self:provider.stage}/SUBNET_ID2}
+
+functions:
+  app:
+    handler: src/server.handler
+    events:
+      - httpApi:
+          path: /{proxy+}
+          method: ANY
+    timeout: 30
+
+plugins:
+  - serverless-webpack
+  - serverless-offline
+  - serverless-ssm-fetch
+
+custom:
+  webpack:
+    webpackConfig: ./webpack.config.js
+    includeModules: true
+
+
+resources:
+  Resources:
+    ApiGatewayUsagePlan:
+      Type: AWS::ApiGateway::UsagePlan
+      Properties:
+        UsagePlanName: BasicPlan
+        Description: Rate-limited plan for EVM token service
+        Quota:
+          Limit: 1000  # Monthly request limit
+          Period: MONTH
+        Throttle:
+          BurstLimit: 10  # Limit burst requests
+          RateLimit: 5     # Limit to 10 requests per second
