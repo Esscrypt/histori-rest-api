@@ -1,38 +1,16 @@
 import express from 'express';
 import { createCustomer, createSubscription } from '../controllers/paymentController';
+import authenticateToken from '../middleware/authenticateToken';
+import { createCheckoutSession, createPortalSession, handleStripeWebhook } from '../controllers/paymentController';
+import bodyParser from 'body-parser';
 
 const router = express.Router();
 
-/**
- * @swagger
- * /create-customer:
- *   post:
- *     summary: Create a new Stripe customer
- *     description: Creates a new customer in Stripe with the provided email and payment method ID.
- *     responses:
- *       200:
- *         description: The newly created customer.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- */
-router.post('/create-customer', createCustomer);
+router.post('/create-checkout-session', createCheckoutSession);
+router.post('/create-portal-session', createPortalSession);
 
-/**
- * @swagger
- * /create-subscription:
- *   post:
- *     summary: Create a new subscription
- *     description: Creates a new subscription for the provided customer ID and price ID.
- *     responses:
- *       200:
- *         description: The newly created subscription and associated API key.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- */
-router.post('/create-subscription', createSubscription);
+// Webhook needs to use raw body for Stripe's signature verification
+router.post('/webhook', bodyParser.raw({ type: 'application/json' }), handleStripeWebhook);
+
 
 export default router;

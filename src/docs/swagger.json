@@ -1,0 +1,60 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+      "title": "Auth API",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/register": {
+        "post": {
+          "summary": "Register a new user",
+          "responses": {
+            "200": {
+              "description": "User registered successfully"
+            }
+          }
+        }
+      },
+      "/login": {
+        "post": {
+          "summary": "Login a user",
+          "responses": {
+            "200": {
+              "description": "User logged in successfully"
+            }
+          }
+        }
+      },
+      "/refresh-token": {
+        "post": {
+          "summary": "Refresh the access token",
+          "responses": {
+            "200": {
+              "description": "Access token refreshed"
+            }
+          }
+        }
+      },
+      "/forgot-password": {
+        "post": {
+          "summary": "Request a password reset",
+          "responses": {
+            "200": {
+              "description": "Password reset email sent"
+            }
+          }
+        }
+      },
+      "/reset-password": {
+        "post": {
+          "summary": "Reset a user's password",
+          "responses": {
+            "200": {
+              "description": "Password reset successfully"
+            }
+          }
+        }
+      }
+    }
+  }
+  
