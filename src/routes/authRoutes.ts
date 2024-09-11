@@ -5,56 +5,184 @@ const router = Router();
 
 /**
  * @swagger
- * /register:
+ * tags:
+ *   name: Auth
+ *   description: Authentication routes
+ */
+
+/**
+ * @swagger
+ * /auth/register:
  *   post:
- *     description: Register a new user
+ *     summary: Register a new user
+ *     description: Register a new user with email and password
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: User's email
+ *               password:
+ *                 type: string
+ *                 description: User's password
  *     responses:
  *       200:
- *         description: User registered successfully
+ *         description: The access and refresh tokens
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 accessToken:
+ *                   type: string
+ *                 refreshToken:
+ *                   type: string
+ *       400:
+ *         description: User already exists
+ *       500:
+ *         description: Server error
  */
 router.post('/register', register);
 
 /**
  * @swagger
- * /login:
+ * /auth/login:
  *   post:
- *     description: Login a user
+ *     summary: Login a user
+ *     description: Login a user with email and password
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: User's email
+ *               password:
+ *                 type: string
+ *                 description: User's password
  *     responses:
  *       200:
- *         description: User logged in successfully
+ *         description: The access and refresh tokens
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 accessToken:
+ *                   type: string
+ *                 refreshToken:
+ *                   type: string
+ *       400:
+ *         description: Invalid credentials
+ *       500:
+ *         description: Server error
  */
 router.post('/login', login);
 
 /**
  * @swagger
- * /refresh-token:
+ * /auth/refresh-token:
  *   post:
- *     description: Refresh the access token
+ *     summary: Refresh the access token
+ *     description: Use a refresh token to generate a new access token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 description: User's refresh token
  *     responses:
  *       200:
  *         description: Access token refreshed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 accessToken:
+ *                   type: string
+ *       401:
+ *         description: Refresh token required
+ *       403:
+ *         description: Invalid refresh token
  */
 router.post('/refresh-token', refreshToken);
 
+
 /**
  * @swagger
- * /forgot-password:
+ * /auth/forgot-password:
  *   post:
- *     description: Request a password reset
+ *     summary: Request a password reset
+ *     description: Sends a password reset email to the user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: User's email
  *     responses:
  *       200:
  *         description: Password reset email sent
+ *       400:
+ *         description: User does not exist
+ *       500:
+ *         description: Server error
  */
 router.post('/forgot-password', forgotPassword);
 
 /**
  * @swagger
- * /reset-password:
+ * /auth/reset-password:
  *   post:
- *     description: Reset a user's password
+ *     summary: Reset the user's password
+ *     description: Reset the user's password using the reset token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Reset token
+ *               newPassword:
+ *                 type: string
+ *                 description: New password
  *     responses:
  *       200:
  *         description: Password reset successfully
+ *       400:
+ *         description: Invalid or expired token
+ *       500:
+ *         description: Server error
  */
 router.post('/reset-password', resetPassword);
 

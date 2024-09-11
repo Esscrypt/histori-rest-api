@@ -10,7 +10,11 @@ export const sequelize = new Sequelize(process.env.DATABASE_URL!, {
 export const connectDB = async () => {
   try {
     await sequelize.authenticate();
-    console.log('Connection has been established successfully.');
+    // Disable `sync` in production
+    // if (process.env.NODE_ENV !== 'production') {
+    //   await sequelize.sync({alter: true});  // This will create tables or update them if necessary
+    // }
+
   } catch (error) {
     console.error('Unable to connect to the database:', error);
   }
