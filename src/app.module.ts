@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
 
@@ -16,26 +16,30 @@ import { AllowanceController } from './allowance/allowance.controller';
 import { TokenController } from './token/token.controller';
 import { TokenService } from './token/token.service';
 import { ApiKeyGuard } from './guards/api-key.guard';
+import { RequestTrackingMiddleware } from './middlewares/request-tracking.middleware';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: 'password',
-      database: 'tokensdb',
+      url: process.env.DATABASE_URL,
       entities: [User, Balance, Allowance, Token, TokenID, TokenSupply],
-      synchronize: true,
+      synchronize: true,  // Enable auto-migration for development
     }),
-    TypeOrmModule.forFeature([Token, Balance, Allowance, User]),
+    TypeOrmModule.forFeature([Token, Balance, Allowance, User, TokenID, TokenSupply]),
     ThrottlerModule.forRoot([{
-      ttl: 1,  // Time window in seconds
-      limit: 5, // Default request limit per time window
+      ttl: 1000,  // Time window in miliseconds
+      limit: 50, // Default request limit per time window
   }]),
   ],
   controllers: [TokenController, BalanceController, AllowanceController],
   providers: [TokenService, UserService, ApiKeyGuard, BalanceService],
 })
-export class AppModule {}
+
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(RequestTrackingMiddleware)
+      .forRoutes('*');  // Apply the middleware globally or to specific routes
+  }
+}

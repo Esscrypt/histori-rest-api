@@ -1,43 +1,82 @@
-import { Column, Entity, PrimaryGeneratedColumn, BeforeInsert } from 'typeorm';
-import * as bcrypt from 'bcryptjs';
+import { Entity, Column, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate, AfterLoad } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEmail, IsEnum, IsOptional, IsEthereumAddress, IsString, MinLength } from 'class-validator';
 import { v4 as uuidv4 } from 'uuid';
-
-export enum ApiKeyTier {
-  BASIC = 'basic',
-  STANDARD = 'standard',
-  PRO = 'pro',
-  ENTERPRISE = 'enterprise',
-}
 
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
+  @ApiProperty({ description: 'Unique identifier for the user' })
   id: number;
 
   @Column({ unique: true })
+  @ApiProperty({ description: 'Email address of the user', uniqueItems: true })
+  @IsEmail({}, { message: 'Invalid email address' })
   email: string;
 
   @Column()
+  @ApiProperty({ description: 'Password for the user account' })
+  @IsString()
+  @MinLength(6, { message: 'Password must be at least 6 characters long' })
   password: string;
 
-  @Column({ nullable: true })
-  refreshToken?: string;
-
   @Column({ default: false })
+  @ApiProperty({ description: 'Whether the user account is active or not', default: false })
   isActive: boolean;
 
   @Column({ nullable: true })
-  resetToken?: string;
+  @ApiPropertyOptional({ description: 'Stripe customer ID associated with the user' })
+  stripeCustomerId?: string;
+
+  @Column({ unique: true })
+  @ApiPropertyOptional({ description: 'API key for the user to access APIs' })
+  apiKey: string;
+
+  @Column({
+    type: 'enum',
+    enum: ['Free', 'Starter', 'Growth', 'Business', 'Enterprise'],
+    default: 'Free',
+  })
+  @ApiProperty({
+    description: 'API tier assigned to the user',
+    enum: ['Free', 'Starter', 'Growth', 'Business', 'Enterprise'],
+    default: 'Free',
+  })
+  @IsEnum(['Free', 'Starter', 'Growth', 'Business', 'Enterprise'], {
+    message: 'Tier must be one of the following: Free, Starter, Growth, Business, Enterprise',
+  })
+  tier: string;
+
+  @Column({ default: 0 })
+  requestCount: number; // Field to track request count
 
   @Column({ nullable: true })
-  resetTokenExpiration?: Date;
+  @ApiPropertyOptional({ description: 'Ethereum wallet address associated with the user' })
+  @IsOptional()
+  @IsEthereumAddress({ message: 'Invalid Ethereum wallet address' })
+  walletAddress?: string;
 
-  @Column({ nullable: true })
-  apiKey?: string;
+  // Temporary in-memory property to hold the original password before any updates
+  private tempPassword: string;
 
-  @Column({ type: 'enum', enum: ApiKeyTier, default: ApiKeyTier.BASIC })
-  apiKeyTier: ApiKeyTier;  // Add API Key Tier with default as BASIC
+  // This lifecycle hook ensures the original password is loaded into `tempPassword`
+  @AfterLoad()
+  private loadTempPassword(): void {
+    this.tempPassword = this.password;
+  }
 
+  // Hook to hash the password before saving
+  @BeforeInsert()
+  @BeforeUpdate()
+  async hashPassword() {
+    if (this.tempPassword !== this.password) {
+      const saltRounds = parseInt(process.env.SALT_ROUNDS || '10', 10);
+      this.password = await bcrypt.hash(this.password, saltRounds); 
+    }
+  }
+
+  // Auto-generate API key before inserting a new user
   @BeforeInsert()
   generateApiKey() {
     if (!this.apiKey) {
@@ -51,4 +90,5 @@ export class User {
 
   async compareApiKey(providedApiKey: string): Promise<boolean> {
     return this.apiKey === providedApiKey;
- 
+  }
+}

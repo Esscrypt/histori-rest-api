@@ -1,68 +1,52 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, Inject } from '@nestjs/common';
-import { Request } from 'express';
-import { UserService } from '../user/user.service';
-import { ThrottlerGuard, ThrottlerStorageService } from '@nestjs/throttler';
-import { ApiKeyTier } from '../models/user.entity';
+import { CanActivate, ExecutionContext, Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from 'src/models/user.entity';
+import { Repository } from 'typeorm';
+
+const tierLimits = {
+  Free: 5000,    // Max 5000 requests per month
+  Starter: 50000,
+  Growth: 300000,
+  Business: 700000,
+  Enterprise: 1000000,
+};
 
 @Injectable()
-export class ApiKeyGuard extends ThrottlerGuard implements CanActivate {
+export class ApiKeyGuard implements CanActivate {
   constructor(
-    private readonly userService: UserService,
-    @Inject(ThrottlerStorageService)
-    private readonly throttlerStorage: ThrottlerStorageService,
-  ) {
-    super(throttlerStorage);
-  }
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<Request>();
-    const apiKey = request.headers['x-api-key'] as string;
+    const request = context.switchToHttp().getRequest();
+    
+    // Get API key from the request headers
+    const apiKey = request.headers['x-api-key'];
 
-    // Look up the user by API key
-    const user = await this.userService.findUserByApiKey(apiKey);
-
-    if (!user || !user.isActive) {
-      throw new UnauthorizedException('Invalid or inactive API key');
+    if (!apiKey) {
+      throw new BadRequestException('API key is required');
     }
 
-    // Determine the rate limit based on API key tier
-    const rateLimitConfig = this.getRateLimitConfig(user.apiKeyTier);
-    this.handleThrottling(context, rateLimitConfig.limit, rateLimitConfig.ttl);
+    // Find user by API key
+    const user = await this.userRepository.findOne({ where: { apiKey } });
+    if (!user) {
+      throw new ForbiddenException('Invalid API key');
+    }
 
-    // Optionally attach the user to the request object
-    (request as any).user = user;
+    // Get the user's request tier and limit
+    const maxRequests = tierLimits[user.tier];
+    if (user.requestCount >= maxRequests) {
+      throw new ForbiddenException('API request limit exceeded');
+    }
+
+    // Increment the request count
+    user.requestCount += 1;
+    await this.userRepository.save(user);
+
+    // Attach user to the request object for further use
+    request.user = user;
+
     return true;
-  }
-
-  // Define rate limits based on API key tier
-  private getRateLimitConfig(tier: ApiKeyTier) {
-    switch (tier) {
-      case ApiKeyTier.BASIC:
-        return { limit: 10, ttl: 60 }; // 10 requests per minute
-      case ApiKeyTier.STANDARD:
-        return { limit: 20, ttl: 60 }; // 20 requests per minute
-      case ApiKeyTier.PRO:
-        return { limit: 50, ttl: 60 }; // 50 requests per minute
-      case ApiKeyTier.ENTERPRISE:
-        return { limit: 100, ttl: 60 }; // 100 requests per minute
-      default:
-        return { limit: 10, ttl: 60 }; // Default limit for undefined tier
-    }
-  }
-
-  // Method to handle throttling based on dynamic rate limits
-  private async handleThrottling(context: ExecutionContext, limit: number, ttl: number) {
-    const request = context.switchToHttp().getRequest<Request>();
-    const key = this.generateKey(context, request.ip);
-
-    // Get the current request count from the throttler storage
-    const { totalHits } = await this.throttlerStorage.getRecord(key, ttl);
-
-    if (totalHits >= limit) {
-      throw new UnauthorizedException('Rate limit exceeded');
-    }
-
-    // Add the current request to the throttler storage
-    await this.throttlerStorage.addRecord(key, ttl);
   }
 }
