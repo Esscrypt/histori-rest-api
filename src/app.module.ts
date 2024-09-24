@@ -1,5 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ConfigModule, ConfigService } from '@nestjs/config'; // Import ConfigModule and ConfigService
 
 import { UserService } from './user/user.service';
 import { BalanceService } from './balance/balance.service';
@@ -20,11 +21,19 @@ import { TokenIDController } from './tokenId/token-id.controller';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      url: process.env.DATABASE_URL,
-      entities: [User],
-      synchronize: false, // Enable auto-migration for development
+    ConfigModule.forRoot({
+      isGlobal: true, // Make ConfigModule global so you don't need to import it in every module
+      envFilePath: '.env', // Specify the path to the .env file (optional if you use the default .env)
+    }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        url: configService.get<string>('DATABASE_URL'), // Get the DATABASE_URL from the .env file
+        entities: [User],
+        synchronize: false, // Disable synchronize in production
+      }),
     }),
     TypeOrmModule.forFeature([User]), // Register the User entity
     ThrottlerModule.forRoot([
@@ -34,7 +43,13 @@ import { TokenIDController } from './tokenId/token-id.controller';
       },
     ]),
   ],
-  controllers: [TokenController, BalanceController, AllowanceController, TokenSupplyController, TokenIDController],
+  controllers: [
+    TokenController,
+    BalanceController,
+    AllowanceController,
+    TokenSupplyController,
+    TokenIDController,
+  ],
   providers: [
     TokenService,
     UserService,
