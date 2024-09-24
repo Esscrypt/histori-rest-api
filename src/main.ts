@@ -1,6 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { writeFileSync } from 'fs';
+import { join } from 'path';
+import { VersionAndNetworkGuard } from './guards/supported-versions-networks.guard';
+import * as dotenv from 'dotenv';
+
+dotenv.config(); // Load environment variables from .env file
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -14,8 +20,17 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api-docs', app, document);  // Serve Swagger docs at /api-docs
 
-  await app.listen(3000);
+  writeFileSync(join(process.cwd(), 'swagger.json'), JSON.stringify(document));
+
+  SwaggerModule.setup('api-docs', app, document); // Serve Swagger docs at /api-docs
+
+  // app.setGlobalPrefix(':version/:network_name'); // Set global prefix for all routes
+  // Apply the global guard to validate version and network
+  app.useGlobalGuards(new VersionAndNetworkGuard());
+
+  const port = process.env.PORT || 3000; // Use PORT from .env or fallback to 3000
+  await app.listen(port);
+  console.log(`Application is running on: http://localhost:${port}`);
 }
 bootstrap();

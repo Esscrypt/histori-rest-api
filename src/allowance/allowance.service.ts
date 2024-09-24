@@ -1,40 +1,50 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Allowance } from '../models/allowance.entity';
+import { AllowanceDto } from 'src/dtos/allowance.dto';
+import { Allowance } from 'src/entities/allowance.entity';
+import { DynamicConnectionService } from 'src/services/dynamic-connection.service';
+import { bufferToHexString, hexStringToBuffer } from 'src/utils/address-utils';
 
 @Injectable()
 export class AllowanceService {
   constructor(
-    @InjectRepository(Allowance)
-    private readonly allowanceRepository: Repository<Allowance>,
+    private readonly dynamicConnectionService: DynamicConnectionService,
   ) {}
 
-  // Read allowances with filters
-  async getAllowances(
-    contractAddress?: string,
-    owner?: string,
-    spender?: string,
-    tokenType?: string,
-    tokenId?: string,  // Optional: Only applicable for ERC721/ERC1155
-    blockNumber?: number,
-    page: number = 1,
-    limit: number = 10
-  ) {
-    const where: any = {};
+  async getAllowance(
+    network_name: string,
+    owner_address: string,
+    spender_address: string,
+    token_address: string,
+    block_number: number,
+  ): Promise<AllowanceDto> {
+    const allowanceRepository =
+      await this.dynamicConnectionService.getRepository<Allowance>(
+        network_name,
+        Allowance,
+      );
 
-    if (contractAddress) where.contractAddress = contractAddress;
-    if (owner) where.owner = owner;
-    if (spender) where.spender = spender;
-    if (tokenType) where.tokenType = tokenType;
-    if (tokenId) where.tokenId = tokenId;
-    if (blockNumber) where.blockNumber = blockNumber;
-
-    const skip = (page - 1) * limit;
-    return this.allowanceRepository.findAndCount({
-      where,
-      skip,
-      take: limit,
+    const allowance = await allowanceRepository.findOne({
+      where: {
+        ownerAddress: hexStringToBuffer(owner_address),
+        spenderAddress: hexStringToBuffer(spender_address),
+        tokenAddress: hexStringToBuffer(token_address),
+        blockNumber: block_number,
+      },
     });
+
+    if (!allowance) {
+      return null;
+    }
+
+    // Convert the entity to DTO
+    return {
+      ownerAddress: bufferToHexString(allowance.ownerAddress),
+      spenderAddress: bufferToHexString(allowance.spenderAddress),
+      tokenAddress: bufferToHexString(allowance.tokenAddress),
+      blockNumber: allowance.blockNumber,
+      allowance: allowance.allowance ? allowance.allowance.toString() : null,
+      tokenId: allowance.tokenId,
+      tokenType: allowance.tokenType,
+    };
   }
 }

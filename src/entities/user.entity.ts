@@ -1,7 +1,21 @@
-import { Entity, Column, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate, AfterLoad } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  BeforeInsert,
+  BeforeUpdate,
+  AfterLoad,
+} from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsEnum, IsOptional, IsEthereumAddress, IsString, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsEthereumAddress,
+  IsString,
+  MinLength,
+} from 'class-validator';
 import { v4 as uuidv4 } from 'uuid';
 
 @Entity()
@@ -22,15 +36,20 @@ export class User {
   password: string;
 
   @Column({ default: false })
-  @ApiProperty({ description: 'Whether the user account is active or not', default: false })
+  @ApiProperty({
+    description: 'Whether the user account is active or not',
+    default: false,
+  })
   isActive: boolean;
 
-  @Column({ nullable: true })
-  @ApiPropertyOptional({ description: 'Stripe customer ID associated with the user' })
-  stripeCustomerId?: string;
+  @Column()
+  @ApiProperty({
+    description: 'Stripe customer ID associated with the user',
+  })
+  stripeCustomerId: string;
 
   @Column({ unique: true })
-  @ApiPropertyOptional({ description: 'API key for the user to access APIs' })
+  @ApiProperty({ description: 'API key for the user to access APIs' })
   apiKey: string;
 
   @Column({
@@ -44,15 +63,24 @@ export class User {
     default: 'Free',
   })
   @IsEnum(['Free', 'Starter', 'Growth', 'Business', 'Enterprise'], {
-    message: 'Tier must be one of the following: Free, Starter, Growth, Business, Enterprise',
+    message:
+      'Tier must be one of the following: Free, Starter, Growth, Business, Enterprise',
   })
   tier: string;
 
   @Column({ default: 0 })
   requestCount: number; // Field to track request count
 
+  @Column({ default: 5000 })
+  @ApiProperty({
+    description: 'Custom rate limit for the user. Meant for enterprise users.',
+  })
+  requestLimit: number; // Field to track request count
+
   @Column({ nullable: true })
-  @ApiPropertyOptional({ description: 'Ethereum wallet address associated with the user' })
+  @ApiPropertyOptional({
+    description: 'Ethereum wallet address associated with the user',
+  })
   @IsOptional()
   @IsEthereumAddress({ message: 'Invalid Ethereum wallet address' })
   walletAddress?: string;
@@ -72,7 +100,7 @@ export class User {
   async hashPassword() {
     if (this.tempPassword !== this.password) {
       const saltRounds = parseInt(process.env.SALT_ROUNDS || '10', 10);
-      this.password = await bcrypt.hash(this.password, saltRounds); 
+      this.password = await bcrypt.hash(this.password, saltRounds);
     }
   }
 

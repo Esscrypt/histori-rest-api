@@ -1,32 +1,64 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { AllowanceService } from './allowance.service';
-import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { AllowanceDto } from 'src/dtos/allowance.dto';
 
 @ApiTags('Allowances')
-@Controller('allowances')
+@Controller(':version/:network_name/allowance')
 export class AllowanceController {
   constructor(private readonly allowanceService: AllowanceService) {}
 
-  @ApiOperation({ summary: 'Get allowances with filters' })
-  @ApiQuery({ name: 'contractAddress', required: false, description: 'Filter by contract address' })
-  @ApiQuery({ name: 'owner', required: false, description: 'Filter by owner' })
-  @ApiQuery({ name: 'spender', required: false, description: 'Filter by spender' })
-  @ApiQuery({ name: 'tokenType', required: false, description: 'Filter by token type' })
-  @ApiQuery({ name: 'tokenId', required: false, description: 'Filter by tokenId' })
-  @ApiQuery({ name: 'blockNumber', required: false, description: 'Filter by block number' })
-  @ApiQuery({ name: 'page', required: true, description: 'Page number for pagination' })
-  @ApiQuery({ name: 'limit', required: true, description: 'Limit per page' })
-  @Get()
-  async getAllowances(
-    @Query('contractAddress') contractAddress?: string,
-    @Query('owner') owner?: string,
-    @Query('spender') spender?: string,
-    @Query('tokenType') tokenType?: string,
-    @Query('tokenId') tokenId?: string,
-    @Query('blockNumber') blockNumber?: number,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10
-  ) {
-    return this.allowanceService.getAllowances(contractAddress, owner, spender, tokenType, tokenId, blockNumber, page, limit);
+  @Get(':owner_address/:spender_address/:token_address/:block_number')
+  @ApiOperation({
+    summary:
+      'Get allowance by owner, spender, token, and block number for a given network.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'The allowance data.',
+    type: AllowanceDto,
+  })
+  @ApiParam({
+    name: 'version',
+    description: 'API version, currently only v1 is supported',
+  })
+  @ApiParam({
+    name: 'network_name',
+    description: 'Blockchain network, currently only eth-mainnet is supported',
+  })
+  @ApiParam({
+    name: 'owner_address',
+    description: 'The wallet address of the owner in hexadecimal format',
+    example: '0x1234567890abcdef1234567890abcdef12345678',
+  })
+  @ApiParam({
+    name: 'spender_address',
+    description: 'The wallet address of the spender in hexadecimal format',
+    example: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
+  })
+  @ApiParam({
+    name: 'token_address',
+    description: 'The contract address of the token in hexadecimal format',
+    example: '0x1234567890abcdef1234567890abcdefabcdef12',
+  })
+  @ApiParam({
+    name: 'block_number',
+    description: 'The block number for which the allowance is requested',
+    example: 123456,
+  })
+  async getAllowance(
+    @Param('network_name') network_name: string,
+    @Param('owner_address') owner_address: string,
+    @Param('spender_address') spender_address: string,
+    @Param('token_address') token_address: string,
+    @Param('block_number') block_number: number,
+  ): Promise<AllowanceDto> {
+    return this.allowanceService.getAllowance(
+      network_name,
+      owner_address,
+      spender_address,
+      token_address,
+      block_number,
+    );
   }
 }

@@ -1,15 +1,13 @@
-import { CanActivate, ExecutionContext, Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/models/user.entity';
+import { User } from 'src/entities/user.entity';
 import { Repository } from 'typeorm';
-
-const tierLimits = {
-  Free: 5000,    // Max 5000 requests per month
-  Starter: 50000,
-  Growth: 300000,
-  Business: 700000,
-  Enterprise: 1000000,
-};
 
 @Injectable()
 export class ApiKeyGuard implements CanActivate {
@@ -20,7 +18,7 @@ export class ApiKeyGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    
+
     // Get API key from the request headers
     const apiKey = request.headers['x-api-key'];
 
@@ -35,8 +33,7 @@ export class ApiKeyGuard implements CanActivate {
     }
 
     // Get the user's request tier and limit
-    const maxRequests = tierLimits[user.tier];
-    if (user.requestCount >= maxRequests) {
+    if (user.requestCount >= user.requestLimit) {
       throw new ForbiddenException('API request limit exceeded');
     }
 

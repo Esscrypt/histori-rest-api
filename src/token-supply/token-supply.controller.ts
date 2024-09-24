@@ -1,22 +1,22 @@
 import { Controller, Get, Param } from '@nestjs/common';
-import { BalanceService } from './balance.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
-import { BalanceDto } from 'src/dtos/balance.dto';
+import { TokenSupplyService } from './token-supply.service';
+import { TokenSupplyDto } from 'src/dtos/token-supply.dto';
 
-@ApiTags('Balances')
-@Controller(':version/:network_name/balance')
-export class BalanceController {
-  constructor(private readonly balanceService: BalanceService) {}
+@ApiTags('TokenSupplies')
+@Controller(':version/:network_name/token-supply')
+export class TokenSupplyController {
+  constructor(private readonly tokenSupplyService: TokenSupplyService) {}
 
-  @Get(':wallet_address/:token_address/:block_number')
+  @Get(':token_address/:block_number')
   @ApiOperation({
     summary:
-      'Get balance by wallet, token, and block number for a given network.',
+      'Get token supply by token address and block number for a given network.',
   })
   @ApiResponse({
     status: 200,
-    description: 'The balance data.',
-    type: BalanceDto,
+    description: 'The token supply data.',
+    type: TokenSupplyDto,
   })
   @ApiParam({
     name: 'version',
@@ -27,29 +27,22 @@ export class BalanceController {
     description: 'Blockchain network, currently only eth-mainnet is supported',
   })
   @ApiParam({
-    name: 'wallet_address',
-    description: 'The wallet address of the user in hexadecimal format',
-    example: '0x1234567890abcdef1234567890abcdef12345678',
-  })
-  @ApiParam({
     name: 'token_address',
     description: 'The contract address of the token in hexadecimal format',
     example: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
   })
   @ApiParam({
     name: 'block_number',
-    description: 'The block number for which the balance is requested',
+    description: 'The block number for which the token supply is requested',
     example: 123456,
   })
-  async getBalance(
+  async getTokenSupply(
     @Param('network_name') network_name: string,
-    @Param('wallet_address') wallet_address: string,
     @Param('token_address') token_address: string,
     @Param('block_number') block_number: number,
-  ): Promise<BalanceDto> {
-    return this.balanceService.getBalance(
+  ): Promise<TokenSupplyDto> {
+    return this.tokenSupplyService.getTokenSupply(
       network_name,
-      wallet_address,
       token_address,
       block_number,
     );

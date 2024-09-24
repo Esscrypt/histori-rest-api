@@ -1,50 +1,75 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Balance } from 'src/models/balance.entity';
-import { Token } from 'src/models/token.entity';
-import { Repository } from 'typeorm';
+import { TokenDto } from 'src/dtos/token.dto';
+import { Token } from 'src/entities/token.entity';
+import { DynamicConnectionService } from 'src/services/dynamic-connection.service';
+import { bufferToHexString, hexStringToBuffer } from 'src/utils/address-utils';
 
 @Injectable()
 export class TokenService {
   constructor(
-    @InjectRepository(Token)
-    private readonly tokenRepository: Repository<Token>,
-
-    @InjectRepository(Balance)
-    private readonly balanceRepository: Repository<Balance>,
+    private readonly dynamicConnectionService: DynamicConnectionService,
   ) {}
 
-  // Fetch paginated tokens with optional filter for token type
-  async getAllTokens(tokenType: string | undefined, page: number, limit: number) {
-    const skip = (page - 1) * limit;
-    const where: any = tokenType ? { tokenType } : {}; // Optional filter by token type
+  // Get paginated list of tokens, optionally filter by token type
+  async getPaginatedTokens(
+    network_name: string,
+    tokenType: string | undefined,
+    page: number,
+    limit: number,
+  ): Promise<TokenDto[]> {
+    const tokenRepository =
+      await this.dynamicConnectionService.getRepository<Token>(
+        network_name,
+        Token,
+      );
 
-    return this.tokenRepository.findAndCount({
+    const skip = (page - 1) * limit;
+    const where: any = tokenType ? { tokenType } : {};
+
+    const tokens = await tokenRepository.find({
       where,
       skip,
       take: limit,
     });
+
+    return tokens.map((token) => ({
+      tokenAddress: bufferToHexString(token.tokenAddress),
+      blockNumber: token.blockNumber,
+      tokenType: token.tokenType,
+      name: token.name,
+      symbol: token.symbol,
+      decimals: token.decimals,
+      granularity: token.granularity,
+    }));
   }
 
-  // Fetch historical ERC20 token balances by wallet address and block number
-  async getHistoricalERC20Balance(wallet: string, blockNumber: number) {
-    return this.balanceRepository.findOne({
-      where: { holder: wallet, blockNumber, tokenType: 'erc20' },
-    });
-  }
+  // Get token by contract address
+  async getTokenByAddress(
+    network_name: string,
+    contractAddress: string,
+  ): Promise<TokenDto> {
+    const tokenRepository =
+      await this.dynamicConnectionService.getRepository<Token>(
+        network_name,
+        Token,
+      );
 
-  // Fetch historical ERC721 token balances by wallet address and block number
-  async getHistoricalERC721Balance(wallet: string, blockNumber: number) {
-    return this.balanceRepository.findOne({
-      where: { holder: wallet, blockNumber, tokenType: 'erc721' },
+    const token = await tokenRepository.findOne({
+      where: { tokenAddress: hexStringToBuffer(contractAddress) },
     });
-  }
 
-  // Get token holder addresses as of a given block number
-  async getTokenHoldersAtBlock(contractAddress: string, blockNumber: number) {
-    return this.balanceRepository.find({
-      where: { contractAddress, blockNumber },
-      select: ['holder'], // Only return holder addresses
-    });
+    if (!token) {
+      return null;
+    }
+
+    return {
+      tokenAddress: bufferToHexString(token.tokenAddress),
+      blockNumber: token.blockNumber,
+      tokenType: token.tokenType,
+      name: token.name,
+      symbol: token.symbol,
+      decimals: token.decimals,
+      granularity: token.granularity,
+    };
   }
 }
