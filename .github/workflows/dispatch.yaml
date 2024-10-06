@@ -9,6 +9,40 @@ jobs:
   trigger-docs-update:
     runs-on: ubuntu-latest
     steps:
+      # Step 1: Check out the repository
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Step 2: Set up Node.js
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      # Step 3: Bump the package version
+      - name: Bump version
+        run: |
+          # Bump the patch version (modify to minor or major as needed)
+          npm version patch --no-git-tag-version
+          # Get the new version from package.json
+          new_version=$(node -p "require('./package.json').version")
+          echo "New version: $new_version"
+      
+      # Step 4: Commit the version change
+      - name: Commit version bump
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json
+          git commit -m "chore: bump version to $new_version"
+
+      # Step 5: Push the changes to the repository
+      - name: Push changes
+        run: |
+          git push origin main
+
+      # Step 6: Send repository dispatch to histori-docs
       - name: Send repository dispatch to histori-docs
         uses: peter-evans/repository-dispatch@v1
         with:
