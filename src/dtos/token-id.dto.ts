@@ -4,14 +4,16 @@ export class TokenIDDto {
   @ApiProperty({
     description: 'Contract address in hexadecimal format (20 bytes)',
     example: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
+    nullable: false,
   })
   contractAddress: string;
 
   @ApiProperty({
     description: 'Token ID for ERC721/1155 tokens',
     example: 1,
+    nullable: false,
   })
-  tokenId: number;
+  tokenId: string;
 
   @ApiProperty({
     description: 'Optional URI for token metadata',

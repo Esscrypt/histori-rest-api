@@ -5,7 +5,7 @@ export class TokenDto {
     description: 'Token contract address in hexadecimal format',
     example: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
   })
-  tokenAddress: string;
+  contractAddress: string;
 
   @ApiProperty({
     description: 'Block number at the time of token creation',

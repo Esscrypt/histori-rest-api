@@ -5,15 +5,25 @@ import { writeFileSync } from 'fs';
 import { join } from 'path';
 import { VersionAndNetworkGuard } from './guards/supported-versions-networks.guard';
 import * as dotenv from 'dotenv';
+import { ValidationPipe } from '@nestjs/common';
 
 dotenv.config(); // Load environment variables from .env file
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true, // Automatically transform payloads to DTO instances
+      transformOptions: { enableImplicitConversion: true },
+      whitelist: true, // Automatically remove properties not in the DTO
+      // forbidNonWhitelisted: true, // Throw an error if non-whitelisted properties are present
+    }),
+  );
+
   // Swagger configuration
   const config = new DocumentBuilder()
-    .setTitle('Token API')
+    .setTitle('Histori API')
     .setDescription('API for token data and historical balances')
     .setVersion('1.0')
     .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'apiKey') // Add API key to Swagger docs

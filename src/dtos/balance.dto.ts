@@ -5,23 +5,26 @@ export class BalanceDto {
     description: 'Wallet address of the token holder in hexadecimal format',
     example: '0x1234567890abcdef1234567890abcdef12345678',
   })
-  walletAddress: string; // Hex format of the wallet address
+  holder: string; // Hex format of the wallet address
 
   @ApiProperty({
     description: 'Token contract address in hexadecimal format',
     example: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
+    type: String,
   })
-  tokenAddress: string; // Hex format of the token address
+  contractAddress: string; // Hex format of the token address
 
   @ApiProperty({
     description: 'The balance of the token',
     example: '1000000000000000000',
+    type: String,
   })
   balance: string; // Balance amount as a string
 
   @ApiProperty({
     description: 'Block number at the time the balance was recorded',
     example: 123456,
+    type: Number,
   })
   blockNumber: number;
 
@@ -29,12 +32,7 @@ export class BalanceDto {
     description: 'Token ID for ERC721 tokens (optional)',
     example: 1,
     nullable: true,
+    type: String,
   })
-  tokenId?: number;
-
-  @ApiProperty({
-    description: 'Type of the token (e.g., ERC20, ERC721)',
-    example: 'ERC20',
-  })
-  tokenType: string;
+  tokenId?: string;
 }

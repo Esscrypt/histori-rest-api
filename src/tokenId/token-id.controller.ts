@@ -39,7 +39,7 @@ export class TokenIDController {
   async getTokenID(
     @Param('network_name') network_name: string,
     @Param('contract_address') contract_address: string,
-    @Param('token_id') token_id: number,
+    @Param('token_id') token_id: string,
   ): Promise<TokenIDDto> {
     return this.tokenIDService.getTokenID(
       network_name,

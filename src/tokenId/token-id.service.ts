@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { TokenIDDto } from 'src/dtos/token-id.dto';
 import { TokenID } from 'src/entities/token-id.entity';
 import { DynamicConnectionService } from 'src/services/dynamic-connection.service';
-import { bufferToHexString, hexStringToBuffer } from 'src/utils/address-utils';
 
 @Injectable()
 export class TokenIDService {
@@ -11,22 +10,22 @@ export class TokenIDService {
   ) {}
 
   async getTokenID(
-    network_name: string,
-    contract_address: string,
-    token_id: number,
+    networkName: string,
+    contractAddress: string,
+    tokenId: string,
   ): Promise<TokenIDDto> {
     // Get the repository dynamically based on the network
     const tokenIDRepository =
       await this.dynamicConnectionService.getRepository<TokenID>(
-        network_name,
+        networkName,
         TokenID,
       );
 
     // Query the token metadata
     const tokenID = await tokenIDRepository.findOne({
       where: {
-        contractAddress: hexStringToBuffer(contract_address),
-        tokenId: token_id,
+        contractAddress,
+        tokenId,
       },
     });
 
@@ -37,9 +36,9 @@ export class TokenIDService {
 
     // Return the TokenIDDto with converted data
     return {
-      contractAddress: bufferToHexString(tokenID.contractAddress),
+      contractAddress: tokenID.contractAddress,
       tokenId: tokenID.tokenId,
-      tokenUri: tokenID.tokenUri || null,
+      tokenUri: tokenID.tokenURI,
     };
   }
 }

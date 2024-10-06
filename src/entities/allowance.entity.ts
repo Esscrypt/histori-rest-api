@@ -1,45 +1,34 @@
-import {
-  Entity,
-  Column,
-  PrimaryColumn,
-  ManyToOne,
-  JoinColumn,
-  Index,
-} from 'typeorm';
-import { Token } from './token.entity';
+import { Entity, Column, PrimaryGeneratedColumn, Index } from 'typeorm';
 
 @Entity('allowances')
-@Index('idx_owner_address', ['ownerAddress'])
-@Index('idx_spender_address', ['spenderAddress'])
-@Index('idx_token_address', ['tokenAddress'])
-@Index('idx_block_number', ['blockNumber'])
+@Index(['contractAddress', 'owner', 'spender', 'blockNumber']) // Composite index for historical querying
+@Index(['contractAddress', 'owner', 'tokenId', 'blockNumber']) // Index for querying by tokenId (ERC721/1155)
 export class Allowance {
-  @PrimaryColumn({ type: 'bytea', nullable: false })
-  ownerAddress: Buffer; // Owner's wallet address (20 bytes)
+  @PrimaryGeneratedColumn()
+  id: number;
 
-  @PrimaryColumn({ type: 'bytea', nullable: false })
-  tokenAddress: Buffer; // Token address (20 bytes)
+  @Column({ type: 'varchar', length: 255, nullable: false })
+  contractAddress: string;
 
-  @PrimaryColumn({ type: 'int', nullable: false })
-  blockNumber: number; // Block number at the time of allowance
+  @Column({ type: 'varchar', length: 255, nullable: false })
+  owner: string;
 
-  @Column({ type: 'bytea', nullable: false })
-  spenderAddress: Buffer; // Spender's wallet address (20 bytes)
+  @Column({ type: 'varchar', length: 255, nullable: false })
+  spender: string;
 
-  @Column({ type: 'bigint', nullable: true })
-  allowance?: string; // Allowance amount, null for ERC721
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  allowance?: string; // Optional: Only relevant for ERC20/ERC777
 
-  @Column({ type: 'smallint', nullable: true })
-  tokenId?: number; // Optional tokenId, relevant for ERC721/ERC1155
+  @Column({ type: 'int', nullable: false })
+  blockNumber: number;
 
-  @Column({ type: 'varchar', length: 10, nullable: false })
-  tokenType: string; // Token type, e.g., "ERC20", "ERC721"
-
-  // Many-to-One relationship to the Token entity (token_address references token_address in tokens table)
-  @ManyToOne(() => Token)
-  @JoinColumn({
-    name: 'token_address',
-    referencedColumnName: 'token_address',
+  @Column({
+    type: 'enum',
+    enum: ['erc20', 'erc721', 'erc777', 'erc1155'],
+    nullable: false,
   })
-  token: Token; // Reference to the Token entity
+  tokenType: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  tokenId?: string; // Optional: Only relevant for ERC721/ERC1155
 }

@@ -1,41 +1,34 @@
-import {
-  Entity,
-  Column,
-  PrimaryColumn,
-  ManyToOne,
-  JoinColumn,
-  Index,
-} from 'typeorm';
-import { Token } from './token.entity';
+import { Entity, Column, PrimaryGeneratedColumn, Index } from 'typeorm';
 
 @Entity('balances')
-@Index('idx_balance_wallet', ['walletAddress'])
-@Index('idx_balance_token', ['tokenAddress'])
-@Index('idx_balance_block', ['blockNumber'])
+@Index(['contractAddress', 'holder', 'tokenId', 'blockNumber']) // Index for querying balances by tokenId for NFTs
+@Index(['holder', 'blockNumber']) // Index for faster querying by holder
 export class Balance {
-  @PrimaryColumn({ type: 'bytea', nullable: false })
-  walletAddress: Buffer; // Wallet address (20 bytes)
+  @PrimaryGeneratedColumn()
+  id: number;
 
-  @PrimaryColumn({ type: 'bytea', nullable: false })
-  tokenAddress: Buffer; // Token address (20 bytes)
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  tokenId?: string; // Optional for ERC20/ERC777, required for ERC721/ERC1155
 
-  @PrimaryColumn({ type: 'int', nullable: false })
-  blockNumber: number; // Block number at the time of balance update
+  @Column({ type: 'varchar', length: 255, nullable: false })
+  contractAddress: string;
 
-  @Column({ type: 'bigint', nullable: false })
-  balance: string; // Balance amount as a string to handle large values
+  @Column({ type: 'varchar', length: 255, nullable: false })
+  holder: string;
 
-  @Column({ type: 'smallint', nullable: true })
-  tokenId?: number; // Optional for ERC721 tokens
+  @Column({ type: 'varchar', length: 255, nullable: false })
+  balance: string; // Use string to handle large BigInt values
 
-  @Column({ type: 'varchar', length: 10, nullable: false })
-  tokenType: string; // e.g., "ERC20", "ERC721"
+  @Column({ type: 'int', nullable: false })
+  blockNumber: number;
 
-  // Relationship to the Token entity
-  @ManyToOne(() => Token)
-  @JoinColumn({
-    name: 'tokenAddress',
-    referencedColumnName: 'tokenAddress',
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  createdAt: Date;
+
+  @Column({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
   })
-  token: Token;
+  updatedAt: Date;
 }

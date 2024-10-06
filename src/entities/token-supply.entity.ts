@@ -1,31 +1,27 @@
-import {
-  Entity,
-  Column,
-  PrimaryColumn,
-  ManyToOne,
-  JoinColumn,
-  Index,
-} from 'typeorm';
-import { Token } from './token.entity';
+import { Entity, Column, PrimaryGeneratedColumn, Index } from 'typeorm';
 
 @Entity('token_supplies')
-@Index('idx_token_supply_address', ['tokenAddress'])
-@Index('idx_token_supply_block', ['blockNumber'])
+@Index(['contractAddress', 'blockNumber']) // Index for querying by contract and block
 export class TokenSupply {
-  @PrimaryColumn({ type: 'bytea', nullable: false })
-  tokenAddress: Buffer; // Token address (20 bytes)
+  @PrimaryGeneratedColumn()
+  id: number;
 
-  @PrimaryColumn({ type: 'int', nullable: false })
-  blockNumber: number; // Block number at the time of the snapshot
+  @Column({ type: 'varchar', length: 255, nullable: false })
+  contractAddress: string; // Foreign key to Token model
 
-  @Column({ type: 'bigint', nullable: false })
-  totalSupply: string; // Total supply as a string to handle large values
+  @Column({ type: 'varchar', length: 255, nullable: false })
+  totalSupply: string; // BigInt values stored as strings
 
-  // Relationship to the Token entity
-  @ManyToOne(() => Token)
-  @JoinColumn({
-    name: 'token_address',
-    referencedColumnName: 'token_address',
+  @Column({ type: 'int', nullable: false })
+  blockNumber: number; // Block number at which the totalSupply was recorded
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  createdAt: Date;
+
+  @Column({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
   })
-  token: Token;
+  updatedAt: Date;
 }

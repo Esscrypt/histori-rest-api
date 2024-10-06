@@ -6,21 +6,21 @@ export class AllowanceDto {
     example: '0x1234567890abcdef1234567890abcdef12345678',
     type: String,
   })
-  ownerAddress: string; // Hexadecimal string for the owner address
+  owner: string; // Hexadecimal string for the owner address
 
   @ApiProperty({
     description: "Spender's wallet address in hexadecimal format",
     example: '0x789012345678901234567890abcdefabcdefabcd',
     type: String,
   })
-  spenderAddress: string; // Hexadecimal string for the spender address
+  spender: string; // Hexadecimal string for the spender address
 
   @ApiProperty({
     description: 'Token contract address in hexadecimal format',
     example: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
     type: String,
   })
-  tokenAddress: string; // Hexadecimal string for the token address
+  contractAddress: string; // Hexadecimal string for the token address
 
   @ApiProperty({
     description: 'Block number at the time the allowance was recorded',
@@ -40,10 +40,10 @@ export class AllowanceDto {
   @ApiProperty({
     description: 'Token ID for ERC721/ERC1155 tokens (optional)',
     example: 1,
-    type: Number,
+    type: String,
     nullable: true,
   })
-  tokenId?: number;
+  tokenId?: string;
 
   @ApiProperty({
     description: 'Token type (e.g., ERC20, ERC721, etc.)',

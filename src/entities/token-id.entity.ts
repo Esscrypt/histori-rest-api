@@ -1,31 +1,27 @@
-import {
-  Entity,
-  Column,
-  PrimaryColumn,
-  ManyToOne,
-  JoinColumn,
-  Index,
-} from 'typeorm';
-import { Token } from './token.entity';
+import { Entity, Column, PrimaryGeneratedColumn, Index } from 'typeorm';
 
 @Entity('token_ids')
-@Index('idx_token_ids_contract_address', ['contractAddress'])
-@Index('idx_token_ids_token_id', ['tokenId'])
+@Index(['contractAddress', 'tokenId'], { unique: true }) // Unique index for quick lookup by contract and tokenId
 export class TokenID {
-  @PrimaryColumn({ type: 'bytea', nullable: false })
-  contractAddress: Buffer; // Contract address (20 bytes)
+  @PrimaryGeneratedColumn()
+  id: number;
 
-  @PrimaryColumn({ type: 'smallint', nullable: false })
-  tokenId: number; // Token ID for ERC721/1155 tokens
+  @Column({ type: 'varchar', length: 255, nullable: false })
+  contractAddress: string; // Reference to the token contract
+
+  @Column({ type: 'varchar', length: 255, nullable: false })
+  tokenId: string; // Unique token ID for ERC721 or ERC1155
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  tokenUri?: string; // Optional: URI for the token metadata
+  tokenURI?: string; // Optional: Store the token URI (metadata)
 
-  // Relationship to the Token entity
-  @ManyToOne(() => Token)
-  @JoinColumn({
-    name: 'contract_address',
-    referencedColumnName: 'token_address',
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  createdAt: Date;
+
+  @Column({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
   })
-  token: Token;
+  updatedAt: Date;
 }

@@ -1,22 +1,18 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { TokenService } from './token.service';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiQuery,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { TokenDto } from 'src/dtos/token.dto';
+import { GetTokensRequestDto } from 'src/dtos/get-tokens-request.dto';
+import { GetTokenByAddressDto } from 'src/dtos/get-token-by-address.dto';
 
 @ApiTags('Tokens')
-@Controller(':version/:network_name/token')
+@Controller(':version/:networkName/token')
 export class TokenController {
   constructor(private readonly tokenService: TokenService) {}
 
   @Get()
   @ApiOperation({
-    summary: 'Get paginated list of tokens, optionally filter by type.',
+    summary: 'Get a paginated list of tokens, optionally filter by type.',
   })
   @ApiResponse({
     status: 200,
@@ -26,34 +22,19 @@ export class TokenController {
   @ApiParam({
     name: 'version',
     description: 'API version, currently only v1 is supported',
+    example: 'v1',
   })
   @ApiParam({
-    name: 'network_name',
+    name: 'networkName',
     description: 'Blockchain network, currently only eth-mainnet is supported',
-  })
-  @ApiQuery({
-    name: 'token_type',
-    required: false,
-    description: 'Filter by token type (e.g., ERC20, ERC721)',
-  })
-  @ApiQuery({
-    name: 'page',
-    required: true,
-    description: 'The page number for pagination.',
-    example: 1,
-  })
-  @ApiQuery({
-    name: 'limit',
-    required: true,
-    description: 'The number of tokens to return per page.',
-    example: 10,
+    example: 'eth-mainnet',
   })
   async getTokens(
-    @Param('network_name') networkName: string,
-    @Query('token_type') tokenType?: string,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
+    @Param('version') version: string,
+    @Param('networkName') networkName: string,
+    @Query() query: GetTokensRequestDto,
   ) {
+    const { tokenType, page = 1, limit = 10 } = query;
     return this.tokenService.getPaginatedTokens(
       networkName,
       tokenType,
@@ -62,7 +43,7 @@ export class TokenController {
     );
   }
 
-  @Get(':contract_address')
+  @Get(':contractAddress')
   @ApiOperation({ summary: 'Get token by contract address.' })
   @ApiResponse({
     status: 200,
@@ -72,20 +53,20 @@ export class TokenController {
   @ApiParam({
     name: 'version',
     description: 'API version, currently only v1 is supported',
+    example: 'v1',
   })
   @ApiParam({
-    name: 'network_name',
+    name: 'networkName',
     description: 'Blockchain network, currently only eth-mainnet is supported',
-  })
-  @ApiParam({
-    name: 'contract_address',
-    description: 'The contract address of the token in hexadecimal format',
-    example: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
+    example: 'eth-mainnet',
   })
   async getTokenByAddress(
-    @Param('network_name') networkName: string,
-    @Param('contract_address') contractAddress: string,
+    @Param('version') version: string,
+    @Param('networkName') networkName: string,
+    @Param() params: GetTokenByAddressDto,
   ): Promise<TokenDto> {
+    const { contractAddress } = params;
+    // Proceed with the token service using the resolved address
     return this.tokenService.getTokenByAddress(networkName, contractAddress);
   }
 }

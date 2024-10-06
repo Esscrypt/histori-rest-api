@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { TokenDto } from 'src/dtos/token.dto';
 import { Token } from 'src/entities/token.entity';
 import { DynamicConnectionService } from 'src/services/dynamic-connection.service';
-import { bufferToHexString, hexStringToBuffer } from 'src/utils/address-utils';
 
 @Injectable()
 export class TokenService {
@@ -33,7 +32,7 @@ export class TokenService {
     });
 
     return tokens.map((token) => ({
-      tokenAddress: bufferToHexString(token.tokenAddress),
+      contractAddress: token.contractAddress,
       blockNumber: token.blockNumber,
       tokenType: token.tokenType,
       name: token.name,
@@ -55,7 +54,7 @@ export class TokenService {
       );
 
     const token = await tokenRepository.findOne({
-      where: { tokenAddress: hexStringToBuffer(contractAddress) },
+      where: { contractAddress },
     });
 
     if (!token) {
@@ -63,7 +62,7 @@ export class TokenService {
     }
 
     return {
-      tokenAddress: bufferToHexString(token.tokenAddress),
+      contractAddress: token.contractAddress,
       blockNumber: token.blockNumber,
       tokenType: token.tokenType,
       name: token.name,

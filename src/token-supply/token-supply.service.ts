@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { TokenSupplyDto } from 'src/dtos/token-supply.dto';
 import { TokenSupply } from 'src/entities/token-supply.entity';
 import { DynamicConnectionService } from 'src/services/dynamic-connection.service';
-import { bufferToHexString, hexStringToBuffer } from 'src/utils/address-utils';
 
 @Injectable()
 export class TokenSupplyService {
@@ -12,7 +11,7 @@ export class TokenSupplyService {
 
   async getTokenSupply(
     network_name: string,
-    token_address: string,
+    contractAddress: string,
     block_number: number,
   ): Promise<TokenSupplyDto> {
     // Get the repository dynamically based on the network
@@ -25,7 +24,7 @@ export class TokenSupplyService {
     // Query the token supply
     const tokenSupply = await tokenSupplyRepository.findOne({
       where: {
-        tokenAddress: hexStringToBuffer(token_address),
+        contractAddress: contractAddress,
         blockNumber: block_number,
       },
     });
@@ -37,7 +36,7 @@ export class TokenSupplyService {
 
     // Return the TokenSupplyDto with converted data
     return {
-      tokenAddress: bufferToHexString(tokenSupply.tokenAddress),
+      contractAddress: tokenSupply.contractAddress,
       blockNumber: tokenSupply.blockNumber,
       totalSupply: tokenSupply.totalSupply.toString(),
     };

@@ -17,7 +17,7 @@ export class VersionAndNetworkGuard implements CanActivate {
 
     // Extract version and network_name from the route params
     const version = request.params.version;
-    const networkName = request.params.network_name;
+    const networkName = request.params.networkName;
 
     // Check if the version is supported
     if (!this.supportedVersions.includes(version)) {
