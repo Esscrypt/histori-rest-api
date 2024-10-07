@@ -1,14 +1,21 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards, Query } from '@nestjs/common';
 import { BalanceService } from './balance.service';
+import { EnsService } from 'src/services/ens.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { BalanceDto } from 'src/dtos/balance.dto';
+import { ApiKeyGuard } from 'src/guards/api-key.guard';
+import { GetBalanceRequestDto } from 'src/dtos/get-balance-request.dto';
 
 @ApiTags('Balances')
-@Controller(':version/:network_name/balance')
+@Controller(':version/:networkName/balance')
+@UseGuards(ApiKeyGuard)
 export class BalanceController {
-  constructor(private readonly balanceService: BalanceService) {}
+  constructor(
+    private readonly balanceService: BalanceService,
+    private readonly ensService: EnsService, // Inject the ENS service
+  ) {}
 
-  @Get(':wallet_address/:token_address/:block_number')
+  @Get()
   @ApiOperation({
     summary:
       'Get balance by wallet, token, and block number for a given network.',
@@ -23,35 +30,31 @@ export class BalanceController {
     description: 'API version, currently only v1 is supported',
   })
   @ApiParam({
-    name: 'network_name',
+    name: 'networkName',
     description: 'Blockchain network, currently only eth-mainnet is supported',
   })
-  @ApiParam({
-    name: 'wallet_address',
-    description: 'The wallet address of the user in hexadecimal format',
-    example: '0x1234567890abcdef1234567890abcdef12345678',
-  })
-  @ApiParam({
-    name: 'token_address',
-    description: 'The contract address of the token in hexadecimal format',
-    example: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-  })
-  @ApiParam({
-    name: 'block_number',
-    description: 'The block number for which the balance is requested',
-    example: 123456,
-  })
   async getBalance(
-    @Param('network_name') network_name: string,
-    @Param('wallet_address') wallet_address: string,
-    @Param('token_address') token_address: string,
-    @Param('block_number') block_number: number,
+    @Param('version') version: string,
+    @Param('networkName') networkName: string,
+    @Query() query: GetBalanceRequestDto,
   ): Promise<BalanceDto> {
+    let { walletAddress } = query;
+    const { tokenAddress, blockNumber } = query;
+    try {
+      // Set the network for ENS resolution
+      this.ensService.setNetwork(networkName);
+
+      // Resolve ENS name for walletAddress
+      walletAddress = await this.ensService.resolveEnsName(walletAddress);
+    } catch (error) {
+      throw new Error(`Failed to resolve ENS name: ${error.message}`);
+    }
+
     return this.balanceService.getBalance(
-      network_name,
-      wallet_address,
-      token_address,
-      block_number,
+      networkName,
+      walletAddress,
+      tokenAddress,
+      parseInt(blockNumber),
     );
   }
 }

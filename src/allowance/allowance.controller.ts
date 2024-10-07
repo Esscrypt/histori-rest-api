@@ -1,14 +1,21 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { AllowanceService } from './allowance.service';
+import { EnsService } from 'src/services/ens.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { AllowanceDto } from 'src/dtos/allowance.dto';
+import { GetAllowanceRequestDto } from 'src/dtos/get-allowance-request.dto';
+import { ApiKeyGuard } from 'src/guards/api-key.guard';
 
 @ApiTags('Allowances')
-@Controller(':version/:network_name/allowance')
+@Controller(':version/:networkName/allowance')
+@UseGuards(ApiKeyGuard)
 export class AllowanceController {
-  constructor(private readonly allowanceService: AllowanceService) {}
+  constructor(
+    private readonly allowanceService: AllowanceService,
+    private readonly ensService: EnsService,
+  ) {}
 
-  @Get(':owner_address/:spender_address/:token_address/:block_number')
+  @Get()
   @ApiOperation({
     summary:
       'Get allowance by owner, spender, token, and block number for a given network.',
@@ -21,44 +28,38 @@ export class AllowanceController {
   @ApiParam({
     name: 'version',
     description: 'API version, currently only v1 is supported',
+    example: 'v1',
   })
   @ApiParam({
-    name: 'network_name',
+    name: 'networkName',
     description: 'Blockchain network, currently only eth-mainnet is supported',
-  })
-  @ApiParam({
-    name: 'owner_address',
-    description: 'The wallet address of the owner in hexadecimal format',
-    example: '0x1234567890abcdef1234567890abcdef12345678',
-  })
-  @ApiParam({
-    name: 'spender_address',
-    description: 'The wallet address of the spender in hexadecimal format',
-    example: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-  })
-  @ApiParam({
-    name: 'token_address',
-    description: 'The contract address of the token in hexadecimal format',
-    example: '0x1234567890abcdef1234567890abcdefabcdef12',
-  })
-  @ApiParam({
-    name: 'block_number',
-    description: 'The block number for which the allowance is requested',
-    example: 123456,
+    example: 'eth-mainnet',
   })
   async getAllowance(
-    @Param('network_name') network_name: string,
-    @Param('owner_address') owner_address: string,
-    @Param('spender_address') spender_address: string,
-    @Param('token_address') token_address: string,
-    @Param('block_number') block_number: number,
+    @Param('version') version: string,
+    @Param('networkName') networkName: string,
+    @Query() query: GetAllowanceRequestDto,
   ): Promise<AllowanceDto> {
+    let { owner, spender } = query;
+    const { tokenAddress, blockNumber } = query;
+
+    try {
+      // Set the network for ENS resolution
+      this.ensService.setNetwork(networkName);
+
+      // Resolve ENS names for owner and spender
+      owner = await this.ensService.resolveEnsName(owner);
+      spender = await this.ensService.resolveEnsName(spender);
+    } catch (error) {
+      throw new Error(`Failed to resolve ENS names: ${error.message}`);
+    }
+
     return this.allowanceService.getAllowance(
-      network_name,
-      owner_address,
-      spender_address,
-      token_address,
-      block_number,
+      networkName,
+      owner,
+      spender,
+      tokenAddress,
+      parseInt(blockNumber),
     );
   }
 }

@@ -1,54 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class AllowanceDto {
-  @ApiProperty({
-    description: "Owner's wallet address in hexadecimal format",
-    example: '0x1234567890abcdef1234567890abcdef12345678',
-    type: String,
-  })
-  owner: string; // Hexadecimal string for the owner address
+  @ApiProperty({ description: 'The ENS name or address of the owner.' })
+  owner: string;
+
+  @ApiProperty({ description: 'The ENS name or address of the spender.' })
+  spender: string;
 
   @ApiProperty({
-    description: "Spender's wallet address in hexadecimal format",
-    example: '0x789012345678901234567890abcdefabcdefabcd',
-    type: String,
+    description: 'The contract address of the token in hexadecimal format.',
   })
-  spender: string; // Hexadecimal string for the spender address
+  tokenAddress: string;
 
   @ApiProperty({
-    description: 'Token contract address in hexadecimal format',
-    example: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-    type: String,
-  })
-  contractAddress: string; // Hexadecimal string for the token address
-
-  @ApiProperty({
-    description: 'Block number at the time the allowance was recorded',
-    example: 123456,
-    type: Number,
+    description: 'The block number for which the allowance is requested.',
   })
   blockNumber: number;
-
-  @ApiProperty({
-    description: 'Allowance amount',
-    example: '1000000000000000000',
-    type: String,
-    nullable: true,
-  })
-  allowance?: string;
-
-  @ApiProperty({
-    description: 'Token ID for ERC721/ERC1155 tokens (optional)',
-    example: 1,
-    type: String,
-    nullable: true,
-  })
-  tokenId?: string;
-
-  @ApiProperty({
-    description: 'Token type (e.g., ERC20, ERC721, etc.)',
-    example: 'ERC20',
-    type: String,
-  })
-  tokenType: string;
 }

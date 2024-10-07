@@ -1,14 +1,21 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { TokenIDService } from './token-id.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { TokenIDDto } from 'src/dtos/token-id.dto';
+import { GetTokenIDRequestDto } from 'src/dtos/get-token-id-request.dto'; // Create this DTO for query validation
+import { ApiKeyGuard } from 'src/guards/api-key.guard';
+import { EnsService } from 'src/services/ens.service'; // Import ENS service for ENS resolution
 
 @ApiTags('TokenIDs')
-@Controller(':version/:network_name/token-id')
+@Controller(':version/:networkName/token-id')
+@UseGuards(ApiKeyGuard)
 export class TokenIDController {
-  constructor(private readonly tokenIDService: TokenIDService) {}
+  constructor(
+    private readonly tokenIDService: TokenIDService,
+    private readonly ensService: EnsService, // Inject ENS service for ENS resolution
+  ) {}
 
-  @Get(':contract_address/:token_id')
+  @Get()
   @ApiOperation({
     summary:
       'Get token metadata by contract address and token ID for a given network.',
@@ -23,28 +30,20 @@ export class TokenIDController {
     description: 'API version, currently only v1 is supported',
   })
   @ApiParam({
-    name: 'network_name',
+    name: 'networkName',
     description: 'Blockchain network, currently only eth-mainnet is supported',
   })
-  @ApiParam({
-    name: 'contract_address',
-    description: 'The contract address of the token in hexadecimal format',
-    example: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-  })
-  @ApiParam({
-    name: 'token_id',
-    description: 'The token ID for the ERC721 or ERC1155 token',
-    example: 1,
-  })
   async getTokenID(
-    @Param('network_name') network_name: string,
-    @Param('contract_address') contract_address: string,
-    @Param('token_id') token_id: string,
+    @Param('version') version: string,
+    @Param('networkName') networkName: string,
+    @Query() query: GetTokenIDRequestDto,
   ): Promise<TokenIDDto> {
+    const { contractAddress, tokenId } = query;
+
     return this.tokenIDService.getTokenID(
-      network_name,
-      contract_address,
-      token_id,
+      networkName,
+      contractAddress,
+      tokenId,
     );
   }
 }

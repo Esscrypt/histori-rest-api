@@ -1,14 +1,20 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { TokenSupplyService } from './token-supply.service';
 import { TokenSupplyDto } from 'src/dtos/token-supply.dto';
+import { GetTokenSupplyRequestDto } from 'src/dtos/get-token-supply-request.dto'; // Assuming you have or will create this DTO
+import { ApiKeyGuard } from 'src/guards/api-key.guard';
+import { EnsService } from 'src/services/ens.service'; // Import the ENS service
 
 @ApiTags('TokenSupplies')
-@Controller(':version/:network_name/token-supply')
+@Controller(':version/:networkName/token-supply')
+@UseGuards(ApiKeyGuard)
 export class TokenSupplyController {
-  constructor(private readonly tokenSupplyService: TokenSupplyService) {}
+  constructor(
+    private readonly tokenSupplyService: TokenSupplyService
+  ) {}
 
-  @Get(':token_address/:block_number')
+  @Get()
   @ApiOperation({
     summary:
       'Get token supply by token address and block number for a given network.',
@@ -23,28 +29,20 @@ export class TokenSupplyController {
     description: 'API version, currently only v1 is supported',
   })
   @ApiParam({
-    name: 'network_name',
+    name: 'networkName',
     description: 'Blockchain network, currently only eth-mainnet is supported',
   })
-  @ApiParam({
-    name: 'token_address',
-    description: 'The contract address of the token in hexadecimal format',
-    example: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-  })
-  @ApiParam({
-    name: 'block_number',
-    description: 'The block number for which the token supply is requested',
-    example: 123456,
-  })
   async getTokenSupply(
-    @Param('network_name') network_name: string,
-    @Param('token_address') token_address: string,
-    @Param('block_number') block_number: number,
+    @Param('version') version: string,
+    @Param('networkName') networkName: string,
+    @Query() query: GetTokenSupplyRequestDto,
   ): Promise<TokenSupplyDto> {
+    const { tokenAddress, blockNumber } = query;
+
     return this.tokenSupplyService.getTokenSupply(
-      network_name,
-      token_address,
-      block_number,
+      networkName,
+      tokenAddress,
+      parseInt(blockNumber),
     );
   }
 }

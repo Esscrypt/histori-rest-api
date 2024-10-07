@@ -1,12 +1,14 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { TokenService } from './token.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { TokenDto } from 'src/dtos/token.dto';
 import { GetTokensRequestDto } from 'src/dtos/get-tokens-request.dto';
 import { GetTokenByAddressDto } from 'src/dtos/get-token-by-address.dto';
+import { ApiKeyGuard } from 'src/guards/api-key.guard';
 
 @ApiTags('Tokens')
 @Controller(':version/:networkName/token')
+@UseGuards(ApiKeyGuard)
 export class TokenController {
   constructor(private readonly tokenService: TokenService) {}
 
