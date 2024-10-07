@@ -6,6 +6,7 @@ import { join } from 'path';
 import { VersionAndNetworkGuard } from './guards/supported-versions-networks.guard';
 import * as dotenv from 'dotenv';
 import { ValidationPipe } from '@nestjs/common';
+import * as packageJson from '../package.json'; // Adjust the path to your package.json if necessary
 
 dotenv.config(); // Load environment variables from .env file
 
@@ -21,11 +22,16 @@ async function bootstrap() {
     }),
   );
 
+  // Get the version from package.json
+  const appVersion = packageJson.version;
+
   // Swagger configuration
   const config = new DocumentBuilder()
     .setTitle('Histori API')
     .setDescription('API for token data and historical balances')
-    .setVersion('1.0')
+    .setVersion(appVersion)
+    .addServer('https://api.histori.xyz', 'Production server') // For production
+    .addServer('http://localhost:3000', 'Local development server') // For local development
     .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'apiKey') // Add API key to Swagger docs
     .build();
 
