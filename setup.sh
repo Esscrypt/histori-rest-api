@@ -21,19 +21,23 @@ echo "Creating systemd service file..."
 
 cat <<EOL | sudo tee $SERVICE_FILE
 [Unit]
-Description=Histori REST API Service
+Description=Histori API
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/node $APP_DIR/dist/main.js
-WorkingDirectory=$APP_DIR
+ExecStart=/usr/bin/node /histori-rest-api/dist/src/main.js
+WorkingDirectory=/histori-rest-api
 Restart=always
 RestartSec=0
-User=nobody
-Group=nogroup
+User=root
+Environment=NODE_ENV=production
+Environment=PORT=3000
+# You can add any other necessary environment variables here
+ExecReload=/bin/kill -s HUP $MAINPID
 
 [Install]
 WantedBy=multi-user.target
+
 EOL
 
 # Reload systemd to recognize the new service and enable it to start on boot
@@ -47,4 +51,4 @@ sudo systemctl start $SERVICE_NAME
 
 # Verify the service is running
 echo "Service status:"
-sudo systemctl status $SERVICE_NAME --no-pager
+sudo journalctl -u histori-rest-api -f
