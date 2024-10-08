@@ -1,14 +1,12 @@
-import { Controller, Get, Param, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { BalanceService } from './balance.service';
 import { EnsService } from 'src/services/ens.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { BalanceDto } from 'src/dtos/balance.dto';
-import { ApiKeyGuard } from 'src/guards/api-key.guard';
 import { GetBalanceRequestDto } from 'src/dtos/get-balance-request.dto';
 
 @ApiTags('Balances')
 @Controller(':version/:networkName/balance')
-@UseGuards(ApiKeyGuard)
 export class BalanceController {
   constructor(
     private readonly balanceService: BalanceService,

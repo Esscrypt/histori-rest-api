@@ -1,14 +1,12 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { TokenIDService } from './token-id.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { TokenIDDto } from 'src/dtos/token-id.dto';
 import { GetTokenIDRequestDto } from 'src/dtos/get-token-id-request.dto'; // Create this DTO for query validation
-import { ApiKeyGuard } from 'src/guards/api-key.guard';
 import { EnsService } from 'src/services/ens.service'; // Import ENS service for ENS resolution
 
 @ApiTags('TokenIDs')
 @Controller(':version/:networkName/token-id')
-@UseGuards(ApiKeyGuard)
 export class TokenIDController {
   constructor(
     private readonly tokenIDService: TokenIDService,

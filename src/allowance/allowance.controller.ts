@@ -1,14 +1,12 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { AllowanceService } from './allowance.service';
 import { EnsService } from 'src/services/ens.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { AllowanceDto } from 'src/dtos/allowance.dto';
 import { GetAllowanceRequestDto } from 'src/dtos/get-allowance-request.dto';
-import { ApiKeyGuard } from 'src/guards/api-key.guard';
 
 @ApiTags('Allowances')
 @Controller(':version/:networkName/allowance')
-@UseGuards(ApiKeyGuard)
 export class AllowanceController {
   constructor(
     private readonly allowanceService: AllowanceService,

@@ -1,18 +1,13 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { TokenSupplyService } from './token-supply.service';
 import { TokenSupplyDto } from 'src/dtos/token-supply.dto';
 import { GetTokenSupplyRequestDto } from 'src/dtos/get-token-supply-request.dto'; // Assuming you have or will create this DTO
-import { ApiKeyGuard } from 'src/guards/api-key.guard';
-import { EnsService } from 'src/services/ens.service'; // Import the ENS service
 
 @ApiTags('TokenSupplies')
 @Controller(':version/:networkName/token-supply')
-@UseGuards(ApiKeyGuard)
 export class TokenSupplyController {
-  constructor(
-    private readonly tokenSupplyService: TokenSupplyService
-  ) {}
+  constructor(private readonly tokenSupplyService: TokenSupplyService) {}
 
   @Get()
   @ApiOperation({

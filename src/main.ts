@@ -6,7 +6,10 @@ import { join } from 'path';
 import { VersionAndNetworkGuard } from './guards/supported-versions-networks.guard';
 import * as dotenv from 'dotenv';
 import { ValidationPipe } from '@nestjs/common';
-import * as packageJson from '../package.json'; // Adjust the path to your package.json if necessary
+import * as packageJson from '../package.json';
+import { ApiKeyGuard } from './guards/api-key.guard';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { User } from './entities/user.entity'; // Adjust the path if necessary
 
 dotenv.config(); // Load environment variables from .env file
 
@@ -15,10 +18,9 @@ async function bootstrap() {
 
   app.useGlobalPipes(
     new ValidationPipe({
-      transform: true, // Automatically transform payloads to DTO instances
+      transform: true,
       transformOptions: { enableImplicitConversion: true },
-      whitelist: true, // Automatically remove properties not in the DTO
-      // forbidNonWhitelisted: true, // Throw an error if non-whitelisted properties are present
+      whitelist: true,
     }),
   );
 
@@ -30,22 +32,23 @@ async function bootstrap() {
     .setTitle('Histori API')
     .setDescription('API for token data and historical balances')
     .setVersion(appVersion)
-    .addServer('https://api.histori.xyz', 'Production server') // For production
-    .addServer('http://localhost:3000', 'Local development server') // For local development
-    .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'apiKey') // Add API key to Swagger docs
+    .addServer('https://api.histori.xyz', 'Production server')
+    .addServer('http://localhost:3000', 'Local development server')
+    .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'apiKey')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-
   writeFileSync(join(process.cwd(), 'swagger.json'), JSON.stringify(document));
+  SwaggerModule.setup('api-docs', app, document);
 
-  SwaggerModule.setup('api-docs', app, document); // Serve Swagger docs at /api-docs
+  // Get the User repository from the application context
+  const userRepository = app.get(getRepositoryToken(User));
 
-  // app.setGlobalPrefix(':version/:network_name'); // Set global prefix for all routes
-  // Apply the global guard to validate version and network
+  // Apply the global guards
   app.useGlobalGuards(new VersionAndNetworkGuard());
+  app.useGlobalGuards(new ApiKeyGuard(userRepository));
 
-  const port = process.env.PORT || 3000; // Use PORT from .env or fallback to 3000
+  const port = process.env.PORT || 3000;
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}`);
 }

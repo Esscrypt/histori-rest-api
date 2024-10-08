@@ -1,9 +1,9 @@
 import {
+  BadRequestException,
   CanActivate,
   ExecutionContext,
-  Injectable,
-  BadRequestException,
   ForbiddenException,
+  Injectable,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
@@ -21,29 +21,37 @@ export class ApiKeyGuard implements CanActivate {
 
     // Get API key from the request headers
     const apiKey = request.headers['x-api-key'];
+    console.log('Received API Key:', apiKey);
 
     if (!apiKey) {
       throw new BadRequestException('API key is required');
     }
 
-    // Find user by API key
-    const user = await this.userRepository.findOne({ where: { apiKey } });
-    if (!user) {
-      throw new ForbiddenException('Invalid API key');
+    try {
+      // Find user by API key
+      const user = await this.userRepository.findOne({ where: { apiKey } });
+      console.log('User found:', user);
+
+      if (!user) {
+        throw new ForbiddenException('Invalid API key');
+      }
+
+      // Check the user's request tier and limit
+      if (user.requestCount >= user.requestLimit) {
+        throw new ForbiddenException('API request limit exceeded');
+      }
+
+      // Increment the request count
+      user.requestCount += 1;
+      await this.userRepository.save(user);
+      console.log('User request count updated:', user.requestCount);
+
+      // Attach user to the request object for further use
+      request.user = user;
+      return true;
+    } catch (error) {
+      console.error('Error in API Key Guard:', error);
+      throw error; // Rethrow the error to maintain the guard's behavior
     }
-
-    // Get the user's request tier and limit
-    if (user.requestCount >= user.requestLimit) {
-      throw new ForbiddenException('API request limit exceeded');
-    }
-
-    // Increment the request count
-    user.requestCount += 1;
-    await this.userRepository.save(user);
-
-    // Attach user to the request object for further use
-    request.user = user;
-
-    return true;
   }
 }
