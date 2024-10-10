@@ -5,7 +5,7 @@ import { TokenSupplyDto } from 'src/dtos/token-supply.dto';
 import { GetTokenSupplyRequestDto } from 'src/dtos/get-token-supply-request.dto'; // Assuming you have or will create this DTO
 
 @ApiTags('TokenSupplies')
-@Controller(':version/:networkName/token-supply')
+@Controller(':network/token-supply')
 export class TokenSupplyController {
   constructor(private readonly tokenSupplyService: TokenSupplyService) {}
 
@@ -20,16 +20,13 @@ export class TokenSupplyController {
     type: TokenSupplyDto,
   })
   @ApiParam({
-    name: 'version',
-    description: 'API version, currently only v1 is supported',
-  })
-  @ApiParam({
-    name: 'networkName',
-    description: 'Blockchain network, currently only eth-mainnet is supported',
+    name: 'network',
+    description:
+      'Blockchain network name or chain id, currently only eth-mainnet (or 1) is supported',
+    example: 'eth-mainnet',
   })
   async getTokenSupply(
-    @Param('version') version: string,
-    @Param('networkName') networkName: string,
+    @Param('network') networkName: string,
     @Query() query: GetTokenSupplyRequestDto,
   ): Promise<TokenSupplyDto> {
     const { tokenAddress, blockNumber } = query;

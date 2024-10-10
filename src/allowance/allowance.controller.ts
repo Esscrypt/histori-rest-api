@@ -1,19 +1,16 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { AllowanceService } from './allowance.service';
-import { EnsService } from 'src/services/ens.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { AllowanceDto } from 'src/dtos/allowance.dto';
-import { GetAllowanceRequestDto } from 'src/dtos/get-allowance-request.dto';
+import { GetSingleAllowanceRequestDto } from 'src/dtos/get-single-allowance-request.dto';
+import { GetRangeAllowanceRequestDto } from 'src/dtos/get-range-allowance-request.dto';
 
 @ApiTags('Allowances')
-@Controller(':version/:networkName/allowance')
+@Controller(':network/allowance')
 export class AllowanceController {
-  constructor(
-    private readonly allowanceService: AllowanceService,
-    private readonly ensService: EnsService,
-  ) {}
+  constructor(private readonly allowanceService: AllowanceService) {}
 
-  @Get()
+  @Get('single')
   @ApiOperation({
     summary:
       'Get allowance by owner, spender, token, and block number for a given network.',
@@ -24,40 +21,41 @@ export class AllowanceController {
     type: AllowanceDto,
   })
   @ApiParam({
-    name: 'version',
-    description: 'API version, currently only v1 is supported',
-    example: 'v1',
-  })
-  @ApiParam({
-    name: 'networkName',
-    description: 'Blockchain network, currently only eth-mainnet is supported',
+    name: 'network',
+    description:
+      'Blockchain network name or chain id, currently only eth-mainnet (or 1) is supported',
     example: 'eth-mainnet',
   })
   async getAllowance(
-    @Param('version') version: string,
-    @Param('networkName') networkName: string,
-    @Query() query: GetAllowanceRequestDto,
+    @Param('network') networkName: string,
+    @Query() query: GetSingleAllowanceRequestDto,
   ): Promise<AllowanceDto> {
-    let { owner, spender } = query;
-    const { tokenAddress, blockNumber } = query;
+    return this.allowanceService.getSingleAllowance(networkName, query);
+  }
 
-    try {
-      // Set the network for ENS resolution
-      this.ensService.setNetwork(networkName);
-
-      // Resolve ENS names for owner and spender
-      owner = await this.ensService.resolveEnsName(owner);
-      spender = await this.ensService.resolveEnsName(spender);
-    } catch (error) {
-      throw new Error(`Failed to resolve ENS names: ${error.message}`);
-    }
-
-    return this.allowanceService.getAllowance(
-      networkName,
-      owner,
-      spender,
-      tokenAddress,
-      parseInt(blockNumber),
-    );
+  /**
+   * Query balances over a block range (maximum 1 day).
+   */
+  @Get('range')
+  @ApiOperation({
+    summary:
+      'Get allowances over a block range or time period for a given network.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'The allowances data for a range of blocks or timestamps.',
+    type: [AllowanceDto],
+  })
+  @ApiParam({
+    name: 'network',
+    description:
+      'Blockchain network name or chain id, currently only eth-mainnet (or 1) is supported',
+    example: 'eth-mainnet',
+  })
+  async getRangeBalances(
+    @Param('network') networkName: string,
+    @Query() query: GetRangeAllowanceRequestDto,
+  ): Promise<AllowanceDto[]> {
+    return this.allowanceService.getRangeAllowances(networkName, query);
   }
 }

@@ -5,6 +5,7 @@ export class GetTokensRequestDto {
   @ApiPropertyOptional({
     description: 'Filter by token type (erc20, erc721, erc777, erc1155)',
     enum: ['erc20', 'erc721', 'erc777', 'erc1155'],
+    example: 'erc20',
   })
   @IsOptional()
   @IsIn(['erc20', 'erc721', 'erc777', 'erc1155'])

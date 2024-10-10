@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional } from 'class-validator';
 
 export class BalanceDto {
   @ApiProperty({
@@ -34,5 +35,6 @@ export class BalanceDto {
     nullable: true,
     type: String,
   })
+  @IsOptional()
   tokenId?: string;
 }

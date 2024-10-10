@@ -3,15 +3,21 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
-import { VersionAndNetworkGuard } from './guards/supported-versions-networks.guard';
+import { NetworkGuard } from './guards/supported-networks.guard';
 import * as dotenv from 'dotenv';
 import { ValidationPipe } from '@nestjs/common';
 import * as packageJson from '../package.json';
-import { ApiKeyGuard } from './guards/api-key.guard';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { User } from './entities/user.entity'; // Adjust the path if necessary
+// import { ApiKeyGuard } from './guards/api-key.guard';
+// import { getRepositoryToken } from '@nestjs/typeorm';
+// import { User } from './entities/user.entity';
+import { ChainResolverService } from './services/chainresolver.service';
+import { Handler, Context } from 'aws-lambda';
+import serverlessExpress from '@codegenie/serverless-express';
 
-dotenv.config(); // Load environment variables from .env file
+dotenv.config(); // Load environment variables
+
+// Lambda Handler (used only in production)
+let server: Handler;
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -27,29 +33,54 @@ async function bootstrap() {
   // Get the version from package.json
   const appVersion = packageJson.version;
 
-  // Swagger configuration
-  const config = new DocumentBuilder()
-    .setTitle('Histori API')
-    .setDescription('API for token data and historical balances')
-    .setVersion(appVersion)
-    .addServer('https://api.histori.xyz', 'Production server')
-    .addServer('http://localhost:3000', 'Local development server')
-    .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'apiKey')
-    .build();
+  const chainResolverService = app.get(ChainResolverService);
+  // const userRepository = app.get(getRepositoryToken(User));
 
-  const document = SwaggerModule.createDocument(app, config);
-  writeFileSync(join(process.cwd(), 'swagger.json'), JSON.stringify(document));
-  SwaggerModule.setup('api-docs', app, document);
+  app.useGlobalGuards(new NetworkGuard(chainResolverService));
+  // app.useGlobalGuards(new ApiKeyGuard(userRepository));
 
-  // Get the User repository from the application context
-  const userRepository = app.get(getRepositoryToken(User));
+  if (process.env.NODE_ENV === 'development') {
+    // Swagger configuration for development
+    const config = new DocumentBuilder()
+      .setTitle('Histori API')
+      .setDescription('API for token data and historical balances')
+      .setVersion(appVersion)
+      .addServer('https://api.histori.xyz', 'Production server')
+      .addServer('http://localhost:3001', 'Local development server')
+      .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'apiKey')
+      .addSecurityRequirements('apiKey')
+      .build();
 
-  // Apply the global guards
-  app.useGlobalGuards(new VersionAndNetworkGuard());
-  app.useGlobalGuards(new ApiKeyGuard(userRepository));
+    const document = SwaggerModule.createDocument(app, config);
+    writeFileSync(
+      join(process.cwd(), 'swagger.json'),
+      JSON.stringify(document),
+    );
+    SwaggerModule.setup('api-docs', app, document);
 
-  const port = process.env.PORT || 3000;
-  await app.listen(port);
-  console.log(`Application is running on: http://localhost:${port}`);
+    // Start the app in development mode
+    const port = process.env.PORT || 3000;
+    await app.listen(port);
+    console.log(`Development server running at http://localhost:${port}`);
+  } else if (process.env.NODE_ENV === 'production') {
+    // Production setup using AWS Lambda
+
+    const expressApp = app.getHttpAdapter().getInstance();
+    // TODO: maybe use ExpressAdapter for AWS Lambda
+    // await app.init();
+
+    server = serverlessExpress({ app: expressApp });
+  }
 }
-bootstrap();
+
+// Lambda entry point (only for production)
+export const handler: Handler = async (event: any, context: Context) => {
+  if (!server) {
+    await bootstrap();
+  }
+  return server(event, context);
+};
+
+if (process.env.NODE_ENV === 'development') {
+  bootstrap(); // Directly bootstrap for development
+}

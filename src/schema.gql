@@ -1,0 +1,50 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Balance {
+  holder: String!
+  contractAddress: String!
+  balance: String!
+  blockNumber: Int!
+  tokenId: String
+}
+
+type Allowance {
+  contractAddress: String!
+  owner: String!
+  spender: String!
+  allowance: String
+  blockNumber: Int!
+  tokenType: String!
+  tokenId: String
+}
+
+type TokenSupply {
+  contractAddress: String!
+  blockNumber: Int!
+  totalSupply: String!
+}
+
+type Token {
+  contractAddress: String!
+  blockNumber: Int!
+  tokenType: String!
+  name: String!
+  symbol: String!
+  decimals: Int
+  granularity: String
+}
+
+type Query {
+  getTokens(networkName: String!, tokenType: String, page: Float, limit: Float): [Token!]!
+  getTokenByAddress(version: String!, networkName: String!, contractAddress: String!): Token!
+  getBalance(version: String!, networkName: String!, holder: String!, tokenAddress: String!, blockNumber: Float, timestamp: DateTime): [Balance!]!
+  getAllowance(version: String!, networkName: String!, tokenAddress: String!, blockNumber: Float!, owner: String, spender: String): Allowance!
+  getTokenSupply(version: String!, networkName: String!, tokenAddress: String!, blockNumber: Float!): TokenSupply!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime

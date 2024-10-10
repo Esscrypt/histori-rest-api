@@ -1,0 +1,22 @@
+service: histori-api
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  environment:
+    NODE_ENV: production
+
+functions:
+  api:
+    handler: dist/main.handler
+    events:
+      - http: 'ANY /{proxy+}'
+
+plugins:
+  - serverless-offline
+  - serverless-plugin-typescript
+
+package:
+  exclude:
+    - node_modules/**
+    - .env

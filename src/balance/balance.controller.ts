@@ -1,58 +1,64 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { BalanceService } from './balance.service';
-import { EnsService } from 'src/services/ens.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { BalanceDto } from 'src/dtos/balance.dto';
-import { GetBalanceRequestDto } from 'src/dtos/get-balance-request.dto';
+import { GetSingleBalanceRequestDto } from 'src/dtos/get-single-balance-request.dto';
+import { GetRangeBalanceRequestDto } from 'src/dtos/get-range-balance-request.dto';
 
 @ApiTags('Balances')
-@Controller(':version/:networkName/balance')
+@Controller(':network/balance')
 export class BalanceController {
-  constructor(
-    private readonly balanceService: BalanceService,
-    private readonly ensService: EnsService, // Inject the ENS service
-  ) {}
+  constructor(private readonly balanceService: BalanceService) {}
 
-  @Get()
+  /**
+   * Query a single balance at a specific block number or timestamp.
+   */
+  @Get('single')
   @ApiOperation({
-    summary:
-      'Get balance by wallet, token, and block number for a given network.',
+    summary: 'Get balance by wallet, token, and block number or timestamp.',
   })
   @ApiResponse({
     status: 200,
-    description: 'The balance data.',
+    description: 'The balance data for a specific block or timestamp.',
     type: BalanceDto,
   })
   @ApiParam({
-    name: 'version',
-    description: 'API version, currently only v1 is supported',
+    name: 'network',
+    description:
+      'Blockchain network name or chain id, currently only eth-mainnet (or 1) is supported',
+    example: 'eth-mainnet',
+  })
+  async getSingleBalance(
+    @Param('network') networkName: string,
+    @Query() query: GetSingleBalanceRequestDto,
+  ): Promise<BalanceDto> {
+    return this.balanceService.getSingleBalance(networkName, query);
+  }
+
+  /**
+   * Query balances over a block range (maximum 1 day).
+   */
+  @Get('range')
+  @ApiOperation({
+    summary:
+      'Get balances over a block range or time period for a given network.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'The balances data for a range of blocks or timestamps.',
+    type: [BalanceDto],
   })
   @ApiParam({
-    name: 'networkName',
-    description: 'Blockchain network, currently only eth-mainnet is supported',
+    name: 'network',
+    description:
+      'Blockchain network name or chain id, currently only eth-mainnet (or 1) is supported',
+    example: 'eth-mainnet',
   })
-  async getBalance(
+  async getRangeBalances(
     @Param('version') version: string,
-    @Param('networkName') networkName: string,
-    @Query() query: GetBalanceRequestDto,
-  ): Promise<BalanceDto> {
-    let { walletAddress } = query;
-    const { tokenAddress, blockNumber } = query;
-    try {
-      // Set the network for ENS resolution
-      this.ensService.setNetwork(networkName);
-
-      // Resolve ENS name for walletAddress
-      walletAddress = await this.ensService.resolveEnsName(walletAddress);
-    } catch (error) {
-      throw new Error(`Failed to resolve ENS name: ${error.message}`);
-    }
-
-    return this.balanceService.getBalance(
-      networkName,
-      walletAddress,
-      tokenAddress,
-      parseInt(blockNumber),
-    );
+    @Param('network') networkName: string,
+    @Query() query: GetRangeBalanceRequestDto,
+  ): Promise<BalanceDto[]> {
+    return this.balanceService.getRangeBalances(networkName, query);
   }
 }

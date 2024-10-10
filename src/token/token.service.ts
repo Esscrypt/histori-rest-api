@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { GetTokenByAddressDto } from 'src/dtos/get-token-by-address.dto';
+import { GetTokensRequestDto } from 'src/dtos/get-tokens-request.dto';
 import { TokenDto } from 'src/dtos/token.dto';
 import { Token } from 'src/entities/token.entity';
 import { DynamicConnectionService } from 'src/services/dynamic-connection.service';
@@ -10,12 +12,11 @@ export class TokenService {
   ) {}
 
   // Get paginated list of tokens, optionally filter by token type
-  async getPaginatedTokens(
+  async getTokens(
     network_name: string,
-    tokenType: string | undefined,
-    page: number,
-    limit: number,
+    dto: GetTokensRequestDto,
   ): Promise<TokenDto[]> {
+    const { tokenType, page = 1, limit = 10 } = dto;
     const tokenRepository =
       await this.dynamicConnectionService.getRepository<Token>(
         network_name,
@@ -45,8 +46,9 @@ export class TokenService {
   // Get token by contract address
   async getTokenByAddress(
     network_name: string,
-    contractAddress: string,
+    dto: GetTokenByAddressDto,
   ): Promise<TokenDto> {
+    const { contractAddress } = dto;
     const tokenRepository =
       await this.dynamicConnectionService.getRepository<Token>(
         network_name,
