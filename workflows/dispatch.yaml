@@ -1,0 +1,17 @@
+name: Trigger Documentation Update
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  trigger-docs-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send repository dispatch to histori-docs
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }} # Use the PAT here
+          repository: esscrypt/histori-docs
+          event-type: update-docs

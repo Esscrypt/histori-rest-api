@@ -1,0 +1,106 @@
+# compiled output
+/dist
+/node_modules
+/build
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS
+.DS_Store
+
+# Tests
+/coverage
+/.nyc_output
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# dotenv environment variable files
+.env
+.env.development.local
+.env.development
+.env.test.local
+.env.production.local
+.env.production
+.env.local
+
+# temp directory
+.temp
+.tmp
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Diagnostic reports (https://nodejs.org/api/report.html)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# lambda_*.zip
+lambda_*.zip
+/terraform
+setup.sh
+authorizer.mjs
+deploy.sh
+fetchData.js
+
+# Terraform files
+*.tfstate
+*.tfstate.*
+crash.log
+terraform.tfvars
+terraform.tfvars.json
+*.auto.tfvars
+*.auto.tfvars.json
+
+# Terraform plan files
+*.tfplan
+
+# Ignore secrets in environment files
+.env
+.env.*
+
+# Lock files
+.terraform.lock.hcl
+
+.terraform
+
+# Module-specific files (optional, if using modules)
+modules/*
+
+# Backup and log files
+*.log
+*.backup
+*.bak
+
+# Ignore IDE-specific files (example for VS Code)
+.vscode/
+.idea/
+*.iml
+
+networks.json
+
+**/networks.json
+
+terraform
