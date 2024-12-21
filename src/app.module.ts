@@ -5,7 +5,7 @@ import { CommonModule } from './common/common.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: `.env.${process.env.NODE_ENV || 'development'}`, // Load .env based on NODE_ENV
+      envFilePath: `.env`, // Load .env based on NODE_ENV
       isGlobal: true,
     }),
     CommonModule,

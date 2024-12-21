@@ -11,7 +11,7 @@
         "poolInversed": true,
         "rpc": [
             {
-                "url": "https://node.histori.xyz/eth-mainnet?projectId=<YOUR_HISTORI_PROJECT_ID_HERE>"
+                "url": "https://node.histori.xyz/eth-mainnet/<YOUR_HISTORI_PROJECT_ID_HERE>"
             }
         ],
         "poolScale": 6,
@@ -28,7 +28,7 @@
         "blockTime": 12,
         "rpc": [
             {
-                "url": "https://node.histori.xyz/eth-sepolia?projectId=<YOUR_HISTORI_PROJECT_ID_HERE>"
+                "url": "https://node.histori.xyz/eth-sepolia/<YOUR_HISTORI_PROJECT_ID_HERE>"
             }
         ],
         "USDCAddress": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"

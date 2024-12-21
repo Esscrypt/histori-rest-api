@@ -80,7 +80,7 @@ terraform.tfvars.json
 # Ignore secrets in environment files
 .env
 .env.*
-
+!.env.example
 # Lock files
 .terraform.lock.hcl
 
