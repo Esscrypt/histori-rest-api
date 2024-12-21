@@ -99,8 +99,4 @@ modules/*
 .idea/
 *.iml
 
-networks.json
-
-**/networks.json
-
 terraform

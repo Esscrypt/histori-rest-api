@@ -49,11 +49,11 @@ npm run start:prod
 ## 📜 API Documentation
 
 Comprehensive documentation is available at:
-[Histori REST API Documentation](docs.histori.xyz)
+[Histori REST API Documentation](https://docs.histori.xyz)
 
 Use the following Swagger URL locally after starting the server:
 ```bash
-http://localhost:<PORT>/api/docs
+http://localhost:3001/api-docs
 ```
 
 ## 📫 Let's Build Together
@@ -66,4 +66,4 @@ Explore the power of blockchain history with Histori. Whether you’re a develop
 
 ---
 
-⭐️ ⭐️ From the [Histori Team](https://github.com/orgs/Esscrypt/teams/core) – Your gateway to blockchain insights!
+⭐️ From the [Histori Team](https://github.com/orgs/Esscrypt/teams/core) – Your gateway to blockchain insights!
