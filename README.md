@@ -205,6 +205,7 @@ Explore the power of blockchain history with Histori. Whether you’re a develop
 - **Website**: [histori.xyz](https://histori.xyz)
 - **Docs**: [docs.histori.xyz](https://docs.histori.xyz)
 - **Email**: contact@histori.xyz
+- **Telegram**: [Join](https://t.me/+Khm3XK761_Y1NWI8)
 
 ---
 
